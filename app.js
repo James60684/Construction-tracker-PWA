@@ -2,10 +2,8 @@
 (function(){
   function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn); }
   ready(function(){
-    let tries = 0;
     const wait = setInterval(()=>{
-      if (window.Chart && window.html2canvas && window.jspdf) { clearInterval(wait); init(); }
-      else if (++tries > 80) { console.warn('Libs late, init anyway'); clearInterval(wait); init(); }
+      if (window.Chart && window.html2canvas && window.jspdf){ clearInterval(wait); init(); }
     }, 50);
 
     function init(){
@@ -16,12 +14,13 @@
       const saveBtn=document.getElementById('saveBtn');
       const tbody=document.querySelector('#tradeTable tbody');
       const exportBtn=document.getElementById('exportPdfBtn');
-      const pdfLogo=document.getElementById('pdfLogo');
+      const pdfLogoWhite=document.getElementById('pdfLogoWhite');
 
       const levels=['1','2','3','4','5','6','7','8'];
       const units=['01','02','03','04','05','06','07','08','09','10','11','12'];
       const trades=['Sheeting','Setting + Sanding','Paint - Sealer Coat','Plaster - Defects','Paint - 1st & 2nd Coat','Waterproof - Primed','Waterproof - Membrane 1st Coat','Waterproof - Flood Test','Waterproof - Screed','Waterproof - Membrane 2nd Coat','Joinery - 1st pass','Tiling - Bathroom - Floors','Tiling - Bathroom - Walls','Tiling - Grout','Joinery - Stone','Plumbing - Fitoff','Electrical - Fitoff','Flooring'];
       const statuses=['0%','10%','20%','30%','40%','50%','60%','70%','80%','90%','100%'];
+
       function fill(sel,arr){ sel.innerHTML = arr.map(v=>`<option>${v}</option>`).join('') }
       fill(levelSelect,levels); fill(unitSelect,units); fill(tradeSelect,trades); fill(statusSelect,statuses);
 
@@ -30,10 +29,10 @@
       function readUnit(l,u){ const out={}; trades.forEach(t=>{const v=localStorage.getItem(key(l,u,t)); if(v!=null) out[t]=v}); return out; }
       function unitAvg(l,u){ const m=readUnit(l,u); const vals=trades.map(t=>parseInt((m[t]||'0%'))||0); return Math.round(vals.reduce((a,b)=>a+b,0)/trades.length); }
       function unitAvgForLevel(l){ return units.map(u=>unitAvg(l,u)); }
-      function levelAvg(l){ const a=unitAvgForLevel(l); return Math.round(a.reduce((x,y)=>x+y,0)/a.length); }
+      function levelAvg(l){ const arr=units.map(u=>unitAvg(l,u)); return Math.round(arr.reduce((a,b)=>a+b,0)/arr.length); }
 
       function greenGrad(ctx){ const g=ctx.createLinearGradient(0,ctx.canvas.height,ctx.canvas.width,0); g.addColorStop(0,'#86efac'); g.addColorStop(1,'#16a34a'); return g; }
-      function redGrad(ctx){ const g=ctx.createLinearGradient(0,ctx.canvas.height,ctx.canvas.width,0); g.addColorStop(0,'#fecaca'); g.addColorStop(1,'#ef4444'); return g; }
+      function redGrad(ctx){ const g=ctx.createLinearGradient(0,ctx.canvas.height,ctx.canvas.width,0); g.addColorStop(0,'#fecaca'); g.addColorStop(1,'#7f1d1d'); return g; }
 
       let donut, levelBar;
       Chart.defaults.animation = { duration: 400 };
@@ -49,8 +48,10 @@
       }
 
       function renderTable(l,u){
-        tbody.innerHTML=''; const map=readUnit(l,u);
-        trades.forEach(t=>{ const s=map[t]||'0%'; const ts=localStorage.getItem(key(l,u,t)+':ts')||'';
+        tbody.innerHTML='';
+        const map=readUnit(l,u);
+        trades.forEach(t=>{
+          const s=map[t]||'0%'; const ts=localStorage.getItem(key(l,u,t)+':ts')||'';
           const tr=document.createElement('tr'); tr.innerHTML=`<td>${t}</td><td><span class="badge">${s==='100%'?'COMPLETE':s}</span></td><td>${ts}</td>`; tbody.appendChild(tr);
         });
       }
@@ -64,57 +65,96 @@
 
       function refresh(){ const L=levelSelect.value||levels[0], U=unitSelect.value||units[0]; renderDonut(L,U); renderTable(L,U); renderLevelChart(L); }
       saveBtn.onclick=()=>{ save(levelSelect.value, unitSelect.value, tradeSelect.value, statusSelect.value); refresh(); };
-      levelSelect.onchange=refresh; unitSelect.onchange=refresh;
-      refresh();
+      levelSelect.onchange=refresh; unitSelect.onchange=refresh; refresh();
 
-      function nextFrame(){ return new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))); }
-
+      // PDF Export with brand-styled table
       async function exportPdf(){
         try{
-          const oldAnim = Chart.defaults.animation; Chart.defaults.animation = false;
-          refresh(); await nextFrame();
-
           const { jsPDF } = window.jspdf;
           const pdf = new jsPDF({orientation:'landscape', unit:'pt', format:'a4'});
-          const pageW = pdf.internal.pageSize.getWidth(), pageH = pdf.internal.pageSize.getHeight(), margin=24;
+          const pageW = pdf.internal.pageSize.getWidth();
+          const pageH = pdf.internal.pageSize.getHeight();
+          const margin = 24;
 
-          const logoData = (function(){ const c=document.createElement('canvas'); c.width=80; c.height=80; const x=c.getContext('2d'); x.drawImage(pdfLogo,0,0,c.width,c.height); return c.toDataURL('image/png'); })();
-          pdf.setFillColor(24,31,50); pdf.roundedRect(margin, margin, pageW-margin*2, 56, 8, 8, 'F');
-          pdf.addImage(logoData,'PNG', margin+12, margin+8, 40, 40);
-          pdf.setTextColor(230); pdf.setFont('helvetica','bold'); pdf.setFontSize(18); pdf.text('FITOUT PROGRESS — Report', margin+60, margin+34);
-          pdf.setFont('helvetica','normal'); pdf.setFontSize(11); pdf.text(`Level ${levelSelect.value} (all units)`, margin+60, margin+54);
-          pdf.text(new Date().toLocaleString(), pageW - margin - 180, margin+54);
+          // Header (navy background + white logo + title)
+          pdf.setFillColor(11,18,32); // navy
+          pdf.roundedRect(margin, margin, pageW - margin*2, 56, 8, 8, 'F');
+          // logo
+          const cnv = document.createElement('canvas'); cnv.width=80; cnv.height=80; const cx=cnv.getContext('2d');
+          const logoEl = pdfLogoWhite; cx.drawImage(logoEl,0,0,cnv.width,cnv.height);
+          const logoData = cnv.toDataURL('image/png');
+          pdf.addImage(logoData, 'PNG', margin+12, margin+8, 40, 40);
+          // title
+          pdf.setTextColor(230); pdf.setFont('helvetica','bold'); pdf.setFontSize(18);
+          pdf.text('FITOUT PROGRESS — Level Report', margin+60, margin+34);
+          pdf.setFont('helvetica','normal'); pdf.setFontSize(11);
+          pdf.text(`Level ${levelSelect.value} (all units)`, margin+60, margin+54);
+          pdf.text(new Date().toLocaleString(), pageW - margin - 200, margin+54);
 
-          const L=levelSelect.value; const avg = levelAvg(L);
-          const temp=document.createElement('canvas'); temp.width=220; temp.height=220; const tctx=temp.getContext('2d');
-          new Chart(tctx,{type:'doughnut', data:{labels:['COMPLETE','INCOMPLETE'], datasets:[{data:[avg,100-avg], backgroundColor:[greenGrad(tctx),redGrad(tctx)], borderWidth:0}]},
+          // Small level-average donut (left card)
+          const L = levelSelect.value; const avg = levelAvg(L);
+          const dC = document.createElement('canvas'); dC.width=220; dC.height=220; const dctx=dC.getContext('2d');
+          function greenGradPDF(ctx){ const g=ctx.createLinearGradient(0,ctx.canvas.height,ctx.canvas.width,0); g.addColorStop(0,'#86efac'); g.addColorStop(1,'#16a34a'); return g; }
+          function redGradPDF(ctx){ const g=ctx.createLinearGradient(0,ctx.canvas.height,ctx.canvas.width,0); g.addColorStop(0,'#fecaca'); g.addColorStop(1,'#7f1d1d'); return g; }
+          new Chart(dctx,{type:'doughnut', data:{labels:['COMPLETE','INCOMPLETE'],datasets:[{data:[avg,100-avg],backgroundColor:[greenGradPDF(dctx),redGradPDF(dctx)],borderWidth:0}]},
             options:{cutout:'72%', plugins:{legend:{display:false}, tooltip:{enabled:false}}, animation:false},
-            plugins:[{id:'center', afterDatasetsDraw(chart){ const m=chart.getDatasetMeta(0).data[0]; const cx=chart.ctx; cx.save(); cx.textAlign='center'; cx.fillStyle='#e5e7eb'; cx.font='700 24px Inter, system-ui'; cx.fillText(`${avg}%`, m.x, m.y-4); cx.font='600 10px Inter, system-ui'; cx.fillText('COMPLETE', m.x, m.y+12); cx.restore(); }}]
+            plugins:[{id:'center', afterDatasetsDraw(chart){ const m=chart.getDatasetMeta(0).data[0]; const c2=chart.ctx; c2.save(); c2.textAlign='center'; c2.fillStyle='#e5e7eb'; c2.font='700 24px Inter, system-ui'; c2.fillText(`${avg}%`, m.x, m.y-4); c2.font='600 10px Inter, system-ui'; c2.fillText('COMPLETE', m.x, m.y+12); c2.restore(); }}]
           });
-          await nextFrame();
-          const donutImg = temp.toDataURL('image/png');
+          await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+          const donutImg = dC.toDataURL('image/png');
 
-          const leftX=margin, leftW=300, topY=margin+80, leftH=260;
+          const leftX = margin; const leftW = 300; const topY = margin+80; const leftH = 260;
           pdf.setFillColor(15,23,42); pdf.setDrawColor(30,41,59); pdf.roundedRect(leftX, topY, leftW, leftH, 8, 8, 'FD');
-          pdf.addImage(donutImg,'PNG', leftX+40, topY+20, 220, 220);
-          pdf.setTextColor(230); pdf.setFont('helvetica','bold'); pdf.setFontSize(12); pdf.text('Level Average', leftX+16, topY+leftH-12);
+          pdf.addImage(donutImg, 'PNG', leftX+40, topY+20, 220, 220);
+          pdf.setTextColor(230); pdf.setFont('helvetica','bold'); pdf.setFontSize(12);
+          pdf.text('Level Average', leftX+16, topY+leftH-12);
 
-          const rightX = leftX+leftW+16, rightW = pageW - margin - rightX, rightH = 260;
-          pdf.roundedRect(rightX, topY, rightW, rightH, 8, 8, 'FD');
-          pdf.setFontSize(12); pdf.text('Units — % Complete', rightX+16, topY+20);
+          // Right card: brand-styled table
+          const rightX = leftX + leftW + 16; const rightW = pageW - margin - rightX; const rightH = 260;
+          pdf.setFillColor(15,23,42); pdf.setDrawColor(30,41,59); pdf.roundedRect(rightX, topY, rightW, rightH, 8, 8, 'FD');
+
+          // Table header bar
+          const thH = 28; const rowH = 20;
+          pdf.setFillColor(11,18,32); // navy header
+          pdf.roundedRect(rightX+8, topY+10, rightW-16, thH, 4, 4, 'F');
+          pdf.setTextColor(255); pdf.setFont('helvetica','bold'); pdf.setFontSize(11);
+          const col1 = rightX + 16; const col2 = rightX + rightW*0.55; const col3 = rightX + rightW*0.78;
+          pdf.text('Unit', col1, topY+10+18);
+          pdf.text('% Complete', col2, topY+10+18);
+          pdf.text('Updated', col3, topY+10+18);
+
+          // Rows (striped)
           pdf.setFont('helvetica','normal'); pdf.setFontSize(10);
-          const data = units.map(u=>({u, pct: unitAvg(L,u)}));
-          let y = topY+40; const c1=rightX+16, c2=rightX+rightW*0.5;
-          data.forEach(d=>{ if(y<topY+rightH-12){ pdf.text(`Unit ${d.u}`, c1, y); pdf.text(`${d.pct}%`, c2, y); y+=16; } });
+          const unitData = units.map(u=>({u, pct: unitAvg(L,u), ts: (function(){ // find most recent TS for unit
+            let maxTs='';
+            trades.forEach(t=>{ const ts=localStorage.getItem(key(L,u,t)+':ts')||''; if(ts>maxTs) maxTs=ts; });
+            return maxTs;
+          })()}));
+          let y = topY + 10 + thH + 6;
+          for (let i=0;i<unitData.length;i++){
+            const d = unitData[i];
+            // row bg
+            if (y + rowH > topY + rightH - 10) break; // keep inside card
+            if (i % 2 === 0) { pdf.setFillColor(17,24,39); pdf.rect(rightX+8, y-14, rightW-16, rowH, 'F'); }
+            pdf.setTextColor(229); pdf.text(`Unit ${d.u}`, col1, y);
+            pdf.setTextColor(200); pdf.text(`${d.pct}%`, col2, y);
+            pdf.text(d.ts || '-', col3, y);
+            y += rowH;
+          }
 
+          // Bottom card: level bar chart image
           const barCanvas = await html2canvas(document.querySelector('#levelBar'), {backgroundColor:null, scale:2, useCORS:true});
-          const img = barCanvas.toDataURL('image/png'); const ratio = barCanvas.height / barCanvas.width;
-          const barY = topY + leftH + 16; const availH = pageH - barY - margin; const barW = pageW - margin*2; const barH = Math.min(availH, barW*ratio);
+          const img = barCanvas.toDataURL('image/png');
+          const ratio = barCanvas.height / barCanvas.width;
+          const barY = topY + leftH + 16;
+          const availH = pageH - barY - margin;
+          const barW = pageW - margin*2;
+          const barH = Math.min(availH, barW * ratio);
+          pdf.setFillColor(15,23,42); pdf.setDrawColor(30,41,59);
           pdf.roundedRect(margin, barY, barW, barH+24, 8, 8, 'FD');
-          pdf.addImage(img,'PNG', margin+16, barY+12, barW-32, barH);
+          pdf.addImage(img, 'PNG', margin+16, barY+12, barW-32, barH);
 
-          Chart.defaults.animation = { duration: 400 };
-          pdf.save(`Fitout_Level${levelSelect.value}.pdf`);
+          pdf.save(`Fitout_Level${L}.pdf`);
         }catch(err){
           console.error('PDF export failed', err);
           alert('PDF export failed. Please refresh and try again.');
@@ -122,7 +162,6 @@
       }
 
       exportBtn.addEventListener('click', exportPdf);
-      setTimeout(()=>{ exportBtn.onclick = exportPdf; }, 800);
     }
   });
 })();
