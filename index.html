@@ -3,21 +3,17 @@
 <head>
   <meta charset='utf-8'>
   <meta name='viewport' content='width=device-width, initial-scale=1'>
-  <title>Construction Progress Tracker</title>
+  <title>FITOUT PROGRESS</title>
   <link rel='manifest' href='manifest.json'>
   <link rel='stylesheet' href='styles.css'>
 </head>
 <body>
   <header class='app-header'>
-    <div class="brand"><div class="logo-dot"></div><h1>Construction Progress Tracker</h1></div>
+    <div class="brand"><div class="logo-dot"></div><h1>FITOUT PROGRESS</h1></div>
   </header>
 
   <main class='container'>
     <section class='card filters-card'>
-      <div class="filters-header">
-        <span class="dot ok"></span>
-        <h2>Filters</h2>
-      </div>
       <div class='filters-grid'>
         <div class='control'>
           <div class="label">Level</div>
@@ -45,6 +41,10 @@
       <div class='card'>
         <h3>Unit Progress</h3>
         <div class="canvas-wrap"><canvas id='unitDonut' width='380' height='380'></canvas></div>
+        <div class="legend-inline">
+          <span class="legend-dot complete"></span> COMPLETE
+          <span class="legend-dot incomplete"></span> INCOMPLETE
+        </div>
       </div>
       <div class='card'>
         <h3>Trades for Selection</h3>
@@ -60,16 +60,15 @@
         <div class="canvas-wrap"><canvas id='levelBar' height='320'></canvas></div>
       </div>
     </section>
+
+    <section class="bottom-actions">
+      <button id="exportPdfBtn" class="btn outline">⬇ Export PDF</button>
+    </section>
   </main>
 
-  <footer class='app-footer'><p>Tip: Add to Home Screen for app-like use.</p></footer>
-
   <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js'></script>
-  <script src='app.js?v=3.0'></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => navigator.serviceWorker.register('sw.js?v=3.0'));
-    }
-  </script>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'></script>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'></script>
+  <script src='app.js?v=4.0'></script>
 </body>
 </html>
