@@ -13,26 +13,29 @@
   </header>
 
   <main class='container'>
-    <section class='card'>
-      <div class='filters-row'>
-        <div class='field'>
-          <label for='levelSelect'>Level</label>
-          <select id='levelSelect'></select>
+    <section class='card filters-card'>
+      <div class="filters-header">
+        <span class="dot ok"></span>
+        <h2>Filters</h2>
+      </div>
+      <div class='filters-grid'>
+        <div class='control'>
+          <div class="label">Level</div>
+          <select id='levelSelect' class='select'></select>
         </div>
-        <div class='field'>
-          <label for='unitSelect'>Unit Number</label>
-          <select id='unitSelect'></select>
+        <div class='control'>
+          <div class="label">Unit Number</div>
+          <select id='unitSelect' class='select'></select>
         </div>
-        <div class='field'>
-          <label for='tradeSelect'>Trade</label>
-          <select id='tradeSelect'></select>
+        <div class='control'>
+          <div class="label">Trade</div>
+          <select id='tradeSelect' class='select long'></select>
         </div>
-        <div class='field'>
-          <label for='statusSelect'>Status</label>
-          <select id='statusSelect'></select>
+        <div class='control'>
+          <div class="label">Status</div>
+          <select id='statusSelect' class='select'></select>
         </div>
-        <div class='field field--button'>
-          <label>&nbsp;</label>
+        <div class='control savecell'>
           <button id='saveBtn' class='btn primary'>Save</button>
         </div>
       </div>
@@ -40,11 +43,11 @@
 
     <section class='grid'>
       <div class='card'>
-        <h2>Unit Progress</h2>
-        <canvas id='unitDonut' width='320' height='320'></canvas>
+        <h3>Unit Progress</h3>
+        <div class="canvas-wrap"><canvas id='unitDonut' width='380' height='380'></canvas></div>
       </div>
       <div class='card'>
-        <h2>Trades for Selection</h2>
+        <h3>Trades for Selection</h3>
         <div class='table-wrap'>
           <table id='tradeTable'>
             <thead><tr><th>Trade</th><th>Status</th><th>Updated</th></tr></thead>
@@ -53,8 +56,8 @@
         </div>
       </div>
       <div class='card card--full'>
-        <h2>Level Completion by Unit</h2>
-        <canvas id='levelBar' height='280'></canvas>
+        <h3>Level Completion by Unit</h3>
+        <div class="canvas-wrap"><canvas id='levelBar' height='320'></canvas></div>
       </div>
     </section>
   </main>
@@ -62,6 +65,11 @@
   <footer class='app-footer'><p>Tip: Add to Home Screen for app-like use.</p></footer>
 
   <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js'></script>
-  <script src='app.js'></script>
+  <script src='app.js?v=3.0'></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('sw.js?v=3.0'));
+    }
+  </script>
 </body>
 </html>
