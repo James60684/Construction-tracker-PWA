@@ -22,6 +22,7 @@
     function save(l,u,t,s){ localStorage.setItem(key(l,u,t),s); localStorage.setItem(key(l,u,t)+':ts', new Date().toLocaleString()); }
     function readUnit(l,u){ const out={}; trades.forEach(t=>{const v=localStorage.getItem(key(l,u,t)); if(v!=null) out[t]=v}); return out; }
     function unitAvg(l,u){ const m=readUnit(l,u); const vals=trades.map(t=>parseInt((m[t]||'0%'))||0); return Math.round(vals.reduce((a,b)=>a+b,0)/trades.length); }
+    function levelAvg(l){ const arr=units.map(u=>unitAvg(l,u)); return Math.round(arr.reduce((a,b)=>a+b,0)/arr.length); }
 
     let donut, levelBar;
     function renderDonut(l,u){
@@ -31,8 +32,8 @@
       const red=ctx.createLinearGradient(0,c.height,c.width,0); red.addColorStop(0,'#b91c1c'); red.addColorStop(1,'#ef4444');
       donut=new Chart(ctx,{ type:'doughnut',
         data:{labels:['COMPLETE','INCOMPLETE'],datasets:[{data:[avg,100-avg],backgroundColor:[green,red],borderWidth:0}]},
-        options:{cutout:'72%', plugins:{legend:{display:false}}},
-        plugins:[{id:'center', afterDatasetsDraw(chart){ const m=chart.getDatasetMeta(0).data[0]; if(!m) return; const c=chart.ctx; c.save(); c.font='700 30px Inter, system-ui'; c.fillStyle='#e5e7eb'; c.textAlign='center'; c.fillText(`${avg}%`, m.x, m.y); c.restore(); }}]
+        options:{cutout:'72%', plugins:{legend:{display:false}, tooltip:{enabled:false}}},
+        plugins:[{id:'center', afterDatasetsDraw(chart){ const m=chart.getDatasetMeta(0).data[0]; if(!m) return; const c=chart.ctx; c.save(); c.textAlign='center'; c.fillStyle='#e5e7eb'; c.font='700 30px Inter, system-ui'; c.fillText(`${avg}%`, m.x, m.y-6); c.font='600 12px Inter, system-ui'; c.fillText('COMPLETE', m.x, m.y+16); c.restore(); }}]
       });
     }
 
@@ -60,23 +61,53 @@
     levelSelect.onchange = refresh; unitSelect.onchange = refresh;
     refresh();
 
-    // PDF Export
+    // PDF Export (ENTIRE LEVEL)
     exportBtn.addEventListener('click', async ()=>{
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF({orientation:'landscape', unit:'pt', format:'a4'});
       const pageW = pdf.internal.pageSize.getWidth();
       const pageH = pdf.internal.pageSize.getHeight();
+      const margin = 24;
 
       // Header
-      pdf.setFillColor(24,31,50); // dark header bg
-      pdf.roundedRect(24, 24, pageW-48, 56, 8, 8, 'F');
+      pdf.setFillColor(24,31,50);
+      pdf.roundedRect(margin, margin, pageW - margin*2, 56, 8, 8, 'F');
       pdf.setTextColor(230); pdf.setFont('helvetica','bold'); pdf.setFontSize(18);
-      pdf.text('FITOUT PROGRESS — Report', 40, 58);
+      pdf.text('FITOUT PROGRESS — Report', margin+16, margin+34);
       pdf.setFont('helvetica','normal'); pdf.setFontSize(11);
-      pdf.text(`Level ${levelSelect.value} — Unit ${unitSelect.value}`, 40, 76);
-      pdf.text(new Date().toLocaleString(), pageW-200, 76);
+      pdf.text(`Level ${levelSelect.value} (all units)`, margin+16, margin+54);
+      pdf.text(new Date().toLocaleString(), pageW - margin - 180, margin+54);
 
-      // Helper to capture a DOM node to image
+      // Small level-average donut on a tiny canvas
+      function smallDonut(pct){
+        const c=document.createElement('canvas'); c.width=220; c.height=220; const ctx=c.getContext('2d');
+        const green=ctx.createLinearGradient(0,c.height,c.width,0); green.addColorStop(0,'#16a34a'); green.addColorStop(1,'#22c55e');
+        const red=ctx.createLinearGradient(0,c.height,c.width,0); red.addColorStop(0,'#b91c1c'); red.addColorStop(1,'#ef4444');
+        new Chart(ctx,{type:'doughnut', data:{labels:['COMPLETE','INCOMPLETE'],datasets:[{data:[pct,100-pct],backgroundColor:[green,red],borderWidth:0}]},
+          options:{cutout:'72%', plugins:{legend:{display:false}, tooltip:{enabled:false}}},
+          plugins:[{id:'center', afterDatasetsDraw(chart){ const m=chart.getDatasetMeta(0).data[0]; const c2=chart.ctx; c2.save(); c2.textAlign='center'; c2.fillStyle='#e5e7eb'; c2.font='700 24px Inter, system-ui'; c2.fillText(`${pct}%`, m.x, m.y-4); c2.font='600 10px Inter, system-ui'; c2.fillText('COMPLETE', m.x, m.y+12); c2.restore(); }}]});
+        return new Promise(res=>setTimeout(()=>res(c.toDataURL('image/png')),150));
+      }
+      const lvlAvg = levelAvg(levelSelect.value);
+      const donutImg = await smallDonut(lvlAvg);
+
+      // Left card
+      const leftX = margin; const leftW = 300; const topY = margin+80; const leftH = 260;
+      pdf.setFillColor(15,23,42); pdf.setDrawColor(30,41,59); pdf.roundedRect(leftX, topY, leftW, leftH, 8, 8, 'FD');
+      pdf.addImage(donutImg, 'PNG', leftX+40, topY+20, 220, 220);
+      pdf.setTextColor(230); pdf.setFont('helvetica','bold'); pdf.setFontSize(12);
+      pdf.text('Level Average', leftX+16, topY+leftH-12);
+
+      // Right card (units table)
+      const rightX = leftX + leftW + 16; const rightW = pageW - margin - rightX; const rightH = 260;
+      pdf.roundedRect(rightX, topY, rightW, rightH, 8, 8, 'FD');
+      pdf.setFontSize(12); pdf.text('Units — % Complete', rightX+16, topY+20);
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(10);
+      const data = units.map(u=>({u, pct: unitAvg(levelSelect.value, u)}));
+      let y = topY + 40; const col1 = rightX+16; const col2 = rightX + rightW*0.5;
+      data.forEach(d=>{ if(y < topY+rightH-12){ pdf.text(`Unit ${d.u}`, col1, y); pdf.text(`${d.pct}%`, col2, y); y += 16; } });
+
+      // Bottom card (level bar as image)
       async function nodeToImg(nodeSel, wTarget){
         const node = document.querySelector(nodeSel);
         const canvas = await html2canvas(node, {backgroundColor: null, scale: 2});
@@ -84,40 +115,12 @@
         const ratio = canvas.height / canvas.width;
         return {img, w: wTarget, h: wTarget * ratio};
       }
+      const lvlBarImg = await nodeToImg('#levelBar', pageW - margin*2);
+      const barY = topY + leftH + 16; const barH = Math.min(pageH - barY - margin, lvlBarImg.h);
+      pdf.roundedRect(margin, barY, pageW - margin*2, barH+24, 8, 8, 'FD');
+      pdf.addImage(lvlBarImg.img, 'PNG', margin+16, barY+12, pageW - margin*2 - 32, barH);
 
-      // Cards style boxes
-      function card(x,y,w,h){ pdf.setFillColor(15,23,42); pdf.setDrawColor(30,41,59); pdf.roundedRect(x,y,w,h,8,8,'FD'); }
-
-      // Left: Donut image
-      const donutImg = await nodeToImg('#unitDonut', 350);
-      card(24, 96, 380, 300);
-      pdf.addImage(donutImg.img, 'PNG', 42, 112, donutImg.w, donutImg.h);
-
-      // Right: Trades table summary
-      const cardX = 420, cardW = pageW - cardX - 24;
-      card(cardX, 96, cardW, 300);
-      pdf.setTextColor(230); pdf.setFontSize(12); pdf.setFont('helvetica','bold');
-      pdf.text('Trades Status', cardX+16, 120);
-      pdf.setFont('helvetica','normal'); pdf.setFontSize(10);
-      const map=readUnit(levelSelect.value, unitSelect.value);
-      let y = 140, col1 = cardX+16, col2 = cardX + (cardW*0.6), col3 = cardX + (cardW*0.82);
-      trades.forEach(t=>{
-        const s = (map[t]||'0%'); const ts = localStorage.getItem(key(levelSelect.value,unitSelect.value,t)+':ts')||'';
-        if (y > 96+300-16) return; // prevent overflow; keep summary concise
-        pdf.text(t, col1, y);
-        pdf.text(s=='100%'?'COMPLETE':s, col2, y);
-        pdf.text(ts, col3, y);
-        y += 18;
-      });
-
-      // Bottom: Level chart image
-      const lvlImg = await nodeToImg('#levelBar', pageW-48);
-      const hAvail = pageH - (96+320) - 32;
-      const h = Math.min(lvlImg.h, hAvail);
-      card(24, 420, pageW-48, h+32);
-      pdf.addImage(lvlImg.img, 'PNG', 40, 436, pageW-80, h);
-
-      pdf.save(`Fitout_Level${levelSelect.value}_Unit${unitSelect.value}.pdf`);
+      pdf.save(`Fitout_Level${levelSelect.value}.pdf`);
     });
   });
 })();
