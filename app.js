@@ -5,6 +5,12 @@
     let tries=0; const wait=setInterval(()=>{ if(window.Chart&&window.jspdf){clearInterval(wait);init();} else if(++tries>100){clearInterval(wait);init();}},40);
 
     function init(){
+      // was: 'assets/logo_white.png'
+const logo = new Image();
+logo.src = 'logo_white.png';
+
+// and the hidden img element (if present in index.html):
+<img id="pdfLogoWhite" src="logo_white.png" style="display:none" alt="logo white">
       const levelSelect=document.getElementById('levelSelect');
       const unitSelect=document.getElementById('unitSelect');
       const tradeSelect=document.getElementById('tradeSelect');
