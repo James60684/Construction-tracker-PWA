@@ -9,21 +9,59 @@
 </head>
 <body>
   <header class='app-header'>
-    <h1>Construction Progress Tracker</h1>
+    <div class="brand"><div class="logo-dot"></div><h1>Construction Progress Tracker</h1></div>
   </header>
+
   <main class='container'>
-    <div class='filters'>
-      <label>Level <select id='levelSelect'></select></label>
-      <label>Unit Number <select id='unitSelect'></select></label>
-      <label>Trade <select id='tradeSelect'></select></label>
-      <label>Status <select id='statusSelect'></select></label>
-      <button id='saveBtn'>Save</button>
-    </div>
-    <canvas id='unitDonut' width='320' height='320'></canvas>
-    <p id='summaryText'></p>
-    <table id='tradeTable'><thead><tr><th>Trade</th><th>Status</th></tr></thead><tbody></tbody></table>
+    <section class='card'>
+      <div class='filters-row'>
+        <div class='field'>
+          <label for='levelSelect'>Level</label>
+          <select id='levelSelect'></select>
+        </div>
+        <div class='field'>
+          <label for='unitSelect'>Unit Number</label>
+          <select id='unitSelect'></select>
+        </div>
+        <div class='field'>
+          <label for='tradeSelect'>Trade</label>
+          <select id='tradeSelect'></select>
+        </div>
+        <div class='field'>
+          <label for='statusSelect'>Status</label>
+          <select id='statusSelect'></select>
+        </div>
+        <div class='field field--button'>
+          <label>&nbsp;</label>
+          <button id='saveBtn' class='btn primary'>Save</button>
+        </div>
+      </div>
+    </section>
+
+    <section class='grid'>
+      <div class='card'>
+        <h2>Unit Progress</h2>
+        <canvas id='unitDonut' width='320' height='320'></canvas>
+      </div>
+      <div class='card'>
+        <h2>Trades for Selection</h2>
+        <div class='table-wrap'>
+          <table id='tradeTable'>
+            <thead><tr><th>Trade</th><th>Status</th><th>Updated</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div class='card card--full'>
+        <h2>Level Completion by Unit</h2>
+        <canvas id='levelBar' height='280'></canvas>
+      </div>
+    </section>
   </main>
-  <script src='https://cdn.jsdelivr.net/npm/chart.js'></script>
+
+  <footer class='app-footer'><p>Tip: Add to Home Screen for app-like use.</p></footer>
+
+  <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js'></script>
   <script src='app.js'></script>
 </body>
 </html>
