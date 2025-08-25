@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='utf-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1'>
+  <title>Construction Progress Tracker</title>
+  <link rel='manifest' href='manifest.json'>
+  <link rel='stylesheet' href='styles.css'>
+</head>
+<body>
+  <header class='app-header'>
+    <h1>Construction Progress Tracker</h1>
+  </header>
+  <main class='container'>
+    <div class='filters'>
+      <label>Level <select id='levelSelect'></select></label>
+      <label>Unit Number <select id='unitSelect'></select></label>
+      <label>Trade <select id='tradeSelect'></select></label>
+      <label>Status <select id='statusSelect'></select></label>
+      <button id='saveBtn'>Save</button>
+    </div>
+    <canvas id='unitDonut' width='320' height='320'></canvas>
+    <p id='summaryText'></p>
+    <table id='tradeTable'><thead><tr><th>Trade</th><th>Status</th></tr></thead><tbody></tbody></table>
+  </main>
+  <script src='https://cdn.jsdelivr.net/npm/chart.js'></script>
+  <script src='app.js'></script>
+</body>
+</html>
