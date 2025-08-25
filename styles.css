@@ -1,3 +1,19 @@
+html, body { 
+  min-height: 100%; 
+}
+
+body{
+  background: url('assets/bg.jpg?v=59') center/cover fixed no-repeat;
+  position: relative;
+}
+
+/* dark overlay – reduce opacity so yellow is visible */
+body::before{
+  content:'';
+  position:fixed; inset:0;
+  background: rgba(7,10,18,.38);   /* was .7; this shows the yellow */
+  z-index:-1;
+}
 :root{
   --bg:#0b1220; --card:#0f172a; --text:#e5e7eb; --muted:#cbd5e1;
   --border:#1e293b; --green:#22c55e; --green2:#16a34a; --red:#ef4444; --outline:#223042;
