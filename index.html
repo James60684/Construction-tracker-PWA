@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FITOUT PROGRESS</title>
+  <meta name="theme-color" content="#22c55e" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="styles.css?v=59" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <img src="assets/logo.png" class="logo" alt="Logo" />
+      <h1>FITOUT PROGRESS</h1>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card filters-card">
+      <div class="filters-grid">
+        <div class="control"><div class="label">LEVEL</div><select id="levelSelect" class="select"></select></div>
+        <div class="control"><div class="label">UNIT NUMBER</div><select id="unitSelect" class="select"></select></div>
+        <div class="control"><div class="label">TRADE</div><select id="tradeSelect" class="select long"></select></div>
+        <div class="control"><div class="label">STATUS</div><select id="statusSelect" class="select"></select></div>
+        <div class="control savecell"><button id="saveBtn" class="btn primary" type="button">Save</button></div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="card">
+        <h3>Unit Progress</h3>
+        <div class="canvas-wrap"><canvas id="unitDonut" width="380" height="380"></canvas></div>
+        <div class="legend-inline"><span class="legend-dot complete"></span> COMPLETE <span class="legend-dot incomplete"></span> INCOMPLETE</div>
+      </div>
+
+      <div class="card">
+        <h3>Trades for Selection</h3>
+        <div class="table-wrap">
+          <table id="tradeTable">
+            <thead><tr><th>Trade</th><th>Status</th><th>Updated</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card card--full">
+        <h3>Level Completion by Unit</h3>
+        <div class="canvas-wrap"><canvas id="levelBar" height="320"></canvas></div>
+      </div>
+    </section>
+
+    <section class="bottom-actions">
+      <button id="exportPdfBtn" class="btn cta" type="button">Export PDF</button>
+    </section>
+
+    <img id="pdfLogoWhite" src="assets/logo_white.png" style="display:none" alt="logo white" />
+  </main>
+
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script defer src="app.js?v=5.9"></script>
+</body>
+</html>
