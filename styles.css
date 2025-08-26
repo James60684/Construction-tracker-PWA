@@ -12,14 +12,18 @@ body{
 /* overlay above background, below content */
 body::before{
   content:'';
-  position:fixed; inset:0;
+  position:fixed; inset:0; no
   background:rgba(7,10,18,.38);
   z-index:0;
   pointer-events:none;
 }
 h1{margin:0;font-size:1.6rem}
 .app-header{position:sticky;top:0;z-index:1;background:rgba(15,23,42,.85);border-bottom:1px solid var(--border);padding:.8rem 1.25rem;backdrop-filter:blur(8px)}
-.brand{display:flex;align-items:center;gap:.75rem}.logo{width:28px;height:28px;border-radius:6px}
+.brand{display:flex;align-items:center;gap:.75rem}.logo {
+  height: 48px;   /* increase size */
+  width: auto;
+  margin-right: 10px;
+}
 .container{max-width:1200px;margin:1rem auto;padding:0 1rem;position:relative;z-index:1}
 .card{background:rgba(15,23,42,.92);border:1px solid var(--border);border-radius:16px;padding:1rem;box-shadow:0 12px 28px rgba(0,0,0,.45)}
 .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:1rem;margin-top:1rem}
