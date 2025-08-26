@@ -1,10 +1,10 @@
 {
-  "name": "FITOUT PROGRESS",
-  "short_name": "Fitout",
+  "name": "Progress Tracker",
+  "short_name": "PT",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#00FF00",
+  "background_color": "#0a0f1a",
+  "theme_color": "#0a0f1a",
   "icons": [
     {
       "src": "assets/icon-192.png",
